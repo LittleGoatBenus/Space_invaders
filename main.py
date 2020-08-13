@@ -1,49 +1,239 @@
 import pygame
-import random
-import math
-import time
 import os
+import random
 
+#initialising pygame
+pygame.init()
 
+#screen
+(width, height) = (800, 600)
 
+#scree
+screen = pygame.display.set_mode((width, height))
 
-(width, height) = (800, 600) # delcaring window dimensions
-
-screen = pygame.display.set_mode((width, height)) #calling dimensions and creating screen
 
 #title and icon
-pygame.display.set_caption('GAME') #name of window
+pygame.display.set_caption('invaders') #name of window
 icon = pygame.image.load(os.path.join('assets','crow.png')) #to set an icon
 pygame.display.set_icon(icon) #displaying an icon
 
-#score
-
-score = 0
-
-#Background
-#background = pygame.image.load(os.path.join('assets', 'BG.png') #if you want a background in the while loop add a backrgound image of 800 by 600 then type the command
-
+#colours
+white = (255, 255, 255)
+black = (0, 0, 0)
+green = (0, 255, 0)
+red = (255, 0, 0)
 
 
 
+#classes
 
-#boss alien
-bossimg = pygame.image.load(os.path.join('assets','boss.png'))  #loading the alien image in
-bossx = 750 #the coordinates
-bossy = 50
+#spaceship
 
-def boss(x, y):
-    screen.blit(bossimg, (bossx, bossy)) #drawing an image blit class
+vel = 2 #speed of ship
+velr = 2 #velocity to right
 
-#alien bullets
+class SpaceShip(pygame.sprite.Sprite):
 
-alienbullet = pygame.image.load(os.path.join('assets', 'alienbullet.png'))
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.path.join('assets','ship.png')) #calling the spaceship image in assets folder
+        self.rect = self.image.get_rect()
+        self.health = 3 # the amount of lives the spaceship has
 
-#alien 1
+    def draw(self):
+        screen.blit(self.image, (self.rect.x, self.rect.y)) # the x and y coordinates of the spaceship
 
 
-alienimg = pygame.image.load(os.path.join('assets','alien.png'))
-alienx = random.randint(0,800)
+#alien
+class Alien(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.path.join('assets','alien.png'))
+        self.rect = self.image.get_rect()
+        self.group_rect = pygame.Rect(130, 75, 250,250) # first coordinate where first enemy on left starts, second covers all aliens in the area
+        self.direction = 1 # speed
+    def update(self):
+        self.rect.x += self.direction
+        self.group_rect.x += self.direction
+        if self.group_rect.x + 500 >= 775: # if grouprectangle passes coordinate 775
+            self.direction = -self.direction # change direction to negative
+            self.rect.y += 10 # moves down 5 pixles in y direction
+        if self.group_rect.x <= 25:
+            self.direction = -self.direction
+            self.rect.y += 10 # moves down 5 pixles in y direction
+
+
+
+
+# bunker
+class Bunker(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([8, 8])
+        self.image.fill(green)
+        self.rect = self.image.get_rect()
+
+
+#spaceship laser
+class Laser(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([2, 7])
+        self.image.fill(green)
+        self.rect = self.image.get_rect()
+    def update(self):
+        self.rect.y += -10
+
+#alien laser 1
+
+class AlienLaser(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([2, 7])
+        self.image.fill(red)
+        self.rect = self.image.get_rect()
+    def update(self):
+        self.rect.y += 1
+
+
+
+ship = SpaceShip()
+ship.rect.x = 370 # setting x and y coordinates of space ship
+ship.rect.y = 550
+
+
+alien_list = pygame.sprite.Group()
+bunker_list = pygame.sprite.Group()
+laser_list = pygame.sprite.Group()
+alienlaser_list = pygame.sprite.Group()
+
+#alien 1 list
+for row in range(3, 5): # spawns 2 rows from row 4 and 5
+    for column in range(0, 12): #spawns 10 enemies
+        alien = Alien() # the 80 is settimng them in the middle, the 50 is spacing between each alien
+        alien.rect.x = 80 + (50 * column) #spacing on x axis
+        alien.rect.y = 50 + (50 * row) #spacing on y axis
+        alien_list.add(alien)
+
+
+
+for bunk in range(4): # spawns 4 bunkers
+    for row in range(7): # splits the bunkers into smaller squares from 5 on x
+        for column in range(15): # 15 on y
+            bunker = Bunker() # calling bunker class
+            bunker.rect.x = (50 + (200 * bunk)) + (5 * column) # start bunker at 50 pixels, each bunker spaced 215 pixels, spacing by 10
+            bunker.rect.y = 500 + (5 * row)
+            bunker_list.add(bunker)
+
+
+
+def update():
+
+    screen.fill(black)
+    #lives
+    lives = pygame
+    #sprites
+    ship.draw()
+    alien_list.draw(screen)
+    alien_list.update()
+    bunker_list.draw(screen)
+    laser_list.update()
+    laser_list.draw(screen)
+    alienlaser_list.update()
+    alienlaser_list.draw(screen)
+    pygame.display.update()
+
+
+running = True # set running to true
+
+
+while running: # infinite loop
+
+    pygame.time.delay(5)
+
+
+
+
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+
+
+    key = pygame.key.get_pressed()# calling the pressed function
+
+    if key[pygame.K_LEFT]: # if the left arrow is pressed
+        ship.rect.x += -vel # cange the ships position by vel pixels
+    if key[pygame.K_RIGHT]: # if the right arrow is pressed
+        ship.rect.x += velr # change the ships position by velr pixels
+    if key[pygame.K_SPACE]: # if the space bar is pressed
+        if len(laser_list) < 1: # and there are less than  lasers on screen
+            laser = Laser() #call the laser class
+            laser.rect.x = ship.rect.x + 32 # shoot the laser from position x + 32
+            laser.rect.y = ship.rect.y  # shoot the laser from position y
+            laser_list.add(laser)
+
+
+
+    shoot_chance = random.randint(1, 300) # a random number between 1 and 300
+
+    if shoot_chance < 5:
+        if len(alien_list) > 0: # if there are still aliens on the screen
+            random_alien = random.choice(alien_list.sprites()) # choosing a random alien for bullets to come from
+            alienlaser = AlienLaser()
+            alienlaser.rect.x = random_alien.rect.x  # area were bullets come from
+            alienlaser.rect.y = random_alien.rect.y + 25
+            alienlaser_list.add(alienlaser)
+
+
+
+    for laser in laser_list: #for lasers
+        if laser.rect.y < 0: # if the laser goes off scree
+            laser_list.remove(laser) # this removes the laser
+        for alien in alien_list: # if a lasr rectangle collides
+            if laser.rect.colliderect(alien.rect): # with the alien rectange
+                laser_list.remove(laser) # removes laser
+                alien_list.remove(alien) #removes the alien
+
+
+        for bunker in bunker_list: # same concept as alien rectangle collision
+            if laser.rect.colliderect(bunker.rect): # if the collision of lasers rectangle with bunker rectanger
+                laser_list.remove(laser) # remove the laser
+                bunker_list.remove(bunker) # remove the bunker
+
+
+
+
+
+
+
+    for alienlaser in alienlaser_list: # same concept
+        if alienlaser.rect.y > 600: # removes laser if touches boundry
+            alienlaser_list.remove(alienlaser)
+        if alienlaser.rect.colliderect(ship.rect): # if rectangles collide
+            alienlaser_list.remove(alienlaser) # the health goes down
+            ship.health -= 1 # by one health
+        for bunker in bunker_list: # if bunker is hit by alien laser
+            if alienlaser.rect.colliderect(bunker.rect): # r
+                alienlaser_list.remove(alienlaser)# remove the laser
+                bunker_list.remove(bunker) #remove the bunker
+# ending game
+    if ship.health < 0 or len(alien_list) == 0:
+        running = False
+
+    #spaceship boundries
+
+    if ship.rect.x <= 0: # boundries so ship doesnt go out the srcreen window
+        ship.rect.x = 0
+    elif ship.rect.x >= 736: #image is 64 pixel
+        ship.rect.x = 736
+
+    update()
+
+
+pygame.quit()
+
 alieny = random.randint(50,150)
 alienchangex = 0.15 #the movement of enemy in x direction left to right
 alienchangey = 20 # the movement in y direction , down if a boundry is hit, game over if enemy touches player
